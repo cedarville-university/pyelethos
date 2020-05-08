@@ -1,0 +1,6 @@
+venv/
+pyaefis.egg-info/
+build/
+dist/
+pyaefis/__pycache__
+

@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: pyelethos
+Version: 0.0.1.1
+Summary: Library for interacting with Ellucian Ethos
+Home-page: https://github.com/cedarville-university/py-ethos
+Author: Cedarville University
+Author-email: techhelp@cedarville.edu
+License: UNKNOWN
+Description: # Py-Ethos
+        
+        A little library for interacting with Ellucian Ethos
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown

@@ -1,0 +1,9 @@
+README.md
+setup.cfg
+setup.py
+pyelethos/__init__.py
+pyelethos/pyelethos.py
+pyelethos.egg-info/PKG-INFO
+pyelethos.egg-info/SOURCES.txt
+pyelethos.egg-info/dependency_links.txt
+pyelethos.egg-info/top_level.txt
