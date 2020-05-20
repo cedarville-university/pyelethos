@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
 	name="pyelethos", 
-	version="0.0.1.1",
+	version="0.0.1.2",
 	author="Cedarville University",
 	author_email="techhelp@cedarville.edu",
 	description="Library for interacting with Ellucian Ethos",
