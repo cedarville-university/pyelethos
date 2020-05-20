@@ -1,62 +1,117 @@
-## Copyright 2020 Cedarville University
+# Copyright 2020 Cedarville University
+# Based on code from:  https://github.com/ellucianEthos/python-pubsub-demo
 
 import requests
 
-
 class Pyelethos:
+	ethos_integration_url = "https://integrate.elluciancloud.com"
+	api_key = ''
+	jwt = ''
 
-	def __init__(self, token=None):
-		self.ethostoken = token
-		self.etherealtoken = self.ethosauthentication()
+	def __init__(self, api_key):
+		self.api_key = api_key
 
-	def ethosauthentication(self, errcount=0):
-		# Ethos API Login
-		# POST https://integrate.elluciancloud.com/auth
-		try:
-			response = requests.post(
-				url="https://integrate.elluciancloud.com/auth",
-				headers={
-					"Accept": "application/vnd.ellucian.v1+json",
-					"Content-Type": "application/json",
-					"Authorization": f"Bearer {self.ethostoken}",
-				},
-			)
+	def get_jwt(self):
+		if self.api_key:
+			headers = {'Authorization': "Bearer " + self.api_key}
+			response = requests.request("POST", self.ethos_integration_url + "/auth", headers=headers)
+
 			if response.status_code == 200:
-				return response.text
+				self.jwt = response.text
+				# print(self.jwt)
+			elif response.status_code == 406:
+				raise Exception('Api Key is invalid', response.status_code, response.text)
 			else:
-				print('Response HTTP Status Code: {status_code}'.format(
-					status_code=response.status_code))
-				print('Response HTTP Response Body: {content}'.format(
-					content=response.content))
-		except requests.exceptions.RequestException:
-			print('HTTP Request failed')
+				raise Exception('Error calling pyelethos authorization endpoint', response.status_code,
+								response.text)
+		else:
+			raise Exception('Api Key not defined')
 
-	def getopenterms(self, errcount=0):
-		try:
-			response = requests.get(
-				url="https://integrate.elluciancloud.com/api/academic-periods",
-				params={
-					"criteria": "{\"registration\":\"open\"}",
-				},
-				headers={
-					"Accept": "application/json",
-					"Content-Type": "application/vnd.hedtech.applications.v16.1.0+json",
-					"Authorization": f"Bearer {self.etherealtoken}",
-					"Accept-Charset": "UTF-8",
-				},
-			)
-			if response.status_code == 200:
-				return response.json()
-			elif response.status_code == 419 or response.status_code == 401:
-				if errcount > 10:
-					print(f'{errcount} 419 errors in getopenterms')
-					return None
-				else:
-					errcount += 1
-					self.etherealtoken = self.ethosauthentication()
-					return self.getopenterms(errcount)
-			else:
-				print('getopenterms HTTP Status Code: {status_code}'.format(status_code=response.status_code))
-				print('getopenterms HTTP Response Body: {content}'.format(content=response.content))
-		except requests.exceptions.RequestException:
-			print('getopenterms Request failed')
+	def send_change_notification(self, change_notification, retry=True):
+		if not self.jwt:
+			self.get_jwt()
+
+		headers = {
+			'Authorization': "Bearer " + self.jwt,
+			'Content-Type': 'application/vnd.hedtech.change-notifications.v2+json'}
+		response = requests.request("POST", self.ethos_integration_url + "/publish", headers=headers,
+									json=change_notification)
+
+		if response.status_code == 200:
+			return response.json()
+		elif response.status_code == 401 and retry:
+			print('JWT has expired')
+			self.get_jwt()
+			return self.send_change_notification(change_notification, retry=False)
+		else:
+			raise Exception('Error calling pyelethos consume endpoint send_change_notification', response.status_code, response.text)
+
+	def get_change_notifications(self, retry=True):
+		if not self.jwt:
+			self.get_jwt()
+
+		headers = {
+			'Authorization': "Bearer " + self.jwt,
+			'Accept': 'application/vnd.hedtech.change-notifications.v2+json'}
+		response = requests.request("GET", self.ethos_integration_url + "/consume", headers=headers)
+
+		if response.status_code == 200:
+			return response.json()
+		elif response.status_code == 401 and retry:
+			print('JWT has expired')
+			self.get_jwt()
+			return self.get_change_notifications(retry=False)
+		else:
+			raise Exception('Error calling Ethos Integration consume endpoint', response.status_code, response.text)
+
+	def get_person(self, person_to_get, retry=True):
+		if not self.jwt:
+			self.get_jwt()
+
+		response = requests.get(
+			url=self.ethos_integration_url + "/api/persons",
+			params={
+				"criteria": "{\"credentials\":[{\"type\":\"colleaguePersonId\",\"value\":\"" + person_to_get + "\"}]}",
+			},
+			headers={
+				"Accept": "application/json",
+				"Content-Type": "application/vnd.hedtech.applications.v2+json",
+				"Authorization": "Bearer " + self.jwt,
+				"Accept-Charset": "UTF-8",
+			},
+		)
+
+		if response.status_code == 200:
+			return response.json()
+		elif response.status_code == 401 and retry:
+			print('JWT has expired')
+			self.get_jwt()
+			return self.get_person(person_to_get, retry=False)
+		else:
+			raise Exception('Error calling pyelethos endpoint get_person', response.status_code, response.text)
+
+	def get_open_terms(self, retry=True):
+		if not self.jwt:
+			self.get_jwt()
+
+		response = requests.get(
+			url=self.ethos_integration_url + "/api/academic-periods",
+			params={
+				"criteria": "{\"registration\":\"open\"}",
+			},
+			headers={
+				"Accept": "application/json",
+				"Content-Type": "application/vnd.hedtech.applications.v16.1.0+json",
+				"Authorization": "Bearer " + self.jwt,
+				"Accept-Charset": "UTF-8",
+			},
+		)
+
+		if response.status_code == 200:
+			return response.json()
+		elif response.status_code == 401 and retry:
+			print('JWT has expired')
+			self.get_jwt()
+			return self.get_open_terms(retry=False)
+		else:
+			raise Exception('Error calling pyelethos endpoint get_open_terms', response.status_code, response.text)
