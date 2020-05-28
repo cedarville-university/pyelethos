@@ -141,3 +141,29 @@ class Pyelethos:
 			return self.get_open_terms(retry=False)
 		else:
 			raise Exception('Error calling pyelethos endpoint get_term_by_code', response.status_code, response.text)
+
+	def get_term_starting_after(self, startdate, retry=True):
+		if not self.jwt:
+			self.get_jwt()
+
+		response = requests.get(
+			url=self.ethos_integration_url + "/api/academic-periods",
+			params={
+				"criteria": "{\"startOn\":{\"$gte\":\"" + startdate + "\"}}",
+			},
+			headers={
+				"Accept": "application/json",
+				"Content-Type": "application/vnd.hedtech.applications.v16.1.0+json",
+				"Authorization": "Bearer " + self.jwt,
+				"Accept-Charset": "UTF-8",
+			},
+		)
+
+		if response.status_code == 200:
+			return response.json()
+		elif response.status_code == 401 and retry:
+			print('JWT has expired')
+			self.get_jwt()
+			return self.get_open_terms(retry=False)
+		else:
+			raise Exception('Error calling pyelethos endpoint get_term_starting_after', response.status_code, response.text)
