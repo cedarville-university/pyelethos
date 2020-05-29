@@ -144,7 +144,7 @@ class Pyelethos:
         else:
             raise Exception('Error calling pyelethos endpoint get_term_by_code', response.status_code, response.text)
 
-    def get_term_starting_after(self, startdate, retry=True):
+    def get_terms_starting_after(self, startdate, retry=True):
         if not self.jwt:
             self.get_jwt()
 
