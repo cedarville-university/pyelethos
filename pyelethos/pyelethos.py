@@ -2,6 +2,8 @@
 # Based on code from:  https://github.com/ellucianEthos/python-pubsub-demo
 
 import requests
+import datetime
+from dateutil.parser import *
 
 
 class Pyelethos:
@@ -144,14 +146,25 @@ class Pyelethos:
         else:
             raise Exception('Error calling pyelethos endpoint get_term_by_code', response.status_code, response.text)
 
-    def get_terms_starting_after(self, startdate, retry=True):
+    def get_terms_starting_after(self, passeddate, retry=True):
         if not self.jwt:
             self.get_jwt()
+
+        if isinstance(passeddate, str):
+            searchdate = parse(passeddate)
+        elif isinstance(passeddate, datetime.date):
+            searchdate = passeddate
+        elif isinstance(passeddate, datetime.datetime):
+            searchdate = passeddate
+        else:
+            searchdate = "2020-01-01"
+
+        print(searchdate.strftime("%Y-%m-%d"))
 
         response = requests.get(
             url=self.ethos_integration_url + "/api/academic-periods",
             params={
-                "criteria": "{\"startOn\":{\"$gte\":\"" + startdate + "\"}}",
+                "criteria": "{\"startOn\":{\"$gte\":\"" + searchdate.strftime("%Y-%m-%d") + "\"}}",
             },
             headers={
                 "Accept": "application/json",
